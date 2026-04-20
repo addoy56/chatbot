@@ -1,0 +1,332 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); }
+  #app { max-width: 680px; margin: 0 auto; padding: 0; }
+
+  .header {
+    background: #006B3F;
+    padding: 16px 20px;
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-circle {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: #FCD116;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 500; color: #006B3F; flex-shrink: 0;
+  }
+  .header-text h2 { color: #fff; font-size: 15px; font-weight: 500; }
+  .header-text p { color: rgba(255,255,255,0.75); font-size: 12px; margin-top: 2px; }
+  .status-dot {
+    width: 8px; height: 8px; background: #7CFC00; border-radius: 50%; display: inline-block; margin-right: 5px;
+  }
+
+  .chat-area {
+    background: var(--color-background-secondary);
+    border-left: 0.5px solid var(--color-border-tertiary);
+    border-right: 0.5px solid var(--color-border-tertiary);
+    padding: 16px;
+    min-height: 360px;
+    max-height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .msg { display: flex; gap: 8px; align-items: flex-end; }
+  .msg.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 500;
+  }
+  .bot-avatar { background: #006B3F; color: #FCD116; }
+  .user-avatar { background: var(--color-background-info); color: var(--color-text-info); }
+
+  .bubble {
+    max-width: 82%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--color-text-primary);
+  }
+  .bot-bubble {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-bottom-left-radius: 4px;
+  }
+  .user-bubble {
+    background: #006B3F;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+
+  .typing { display: flex; align-items: center; gap: 4px; padding: 10px 14px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #006B3F; animation: bounce 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+  .input-area {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-top: none;
+    border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+    padding: 12px 16px;
+  }
+
+  .suggestions {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;
+  }
+  .chip {
+    background: var(--color-background-secondary);
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .chip:hover { border-color: #006B3F; color: #006B3F; }
+
+  .input-row { display: flex; gap: 8px; align-items: center; }
+  .input-row input {
+    flex: 1;
+    padding: 9px 13px;
+    border-radius: 20px;
+    border: 0.5px solid var(--color-border-secondary);
+    background: var(--color-background-secondary);
+    font-size: 14px;
+    color: var(--color-text-primary);
+    outline: none;
+  }
+  .input-row input:focus { border-color: #006B3F; }
+  .send-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #006B3F; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .send-btn:hover { background: #005230; }
+  .send-btn svg { width: 16px; height: 16px; fill: none; stroke: #fff; stroke-width: 2; }
+  .send-btn:disabled { background: var(--color-border-tertiary); cursor: not-allowed; }
+
+  .powered {
+    text-align: center; font-size: 11px; color: var(--color-text-secondary); margin-top: 8px;
+  }
+  .accent { color: #CE1126; }
+</style>
+
+<h2 class="sr-only">Sankofa Digital Group — AI Candidate Chatbot powered by Claude</h2>
+
+<div id="app">
+  <div class="header">
+    <div class="logo-circle">SD</div>
+    <div class="header-text">
+      <h2>Sankofa Digital Group</h2>
+      <p><span class="status-dot"></span>HR Assistant · Online</p>
+    </div>
+  </div>
+
+  <div class="chat-area" id="chat"></div>
+
+  <div class="input-area">
+    <div class="suggestions" id="chips">
+      <span class="chip" onclick="sendChip(this)">Work culture</span>
+      <span class="chip" onclick="sendChip(this)">Salary & benefits</span>
+      <span class="chip" onclick="sendChip(this)">How to apply</span>
+      <span class="chip" onclick="sendChip(this)">Graduate program</span>
+      <span class="chip" onclick="sendChip(this)">Remote work policy</span>
+    </div>
+    <div class="input-row">
+      <input id="userInput" type="text" placeholder="Ask about careers at Sankofa..." onkeydown="if(event.key==='Enter')sendMsg()"/>
+      <button class="send-btn" id="sendBtn" onclick="sendMsg()">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+    <div class="powered">Powered by <span class="accent">Sankofa AI</span> · Sankofa Digital Group © 2025</div>
+  </div>
+</div>
+
+<script>
+const SYSTEM_PROMPT = `You are Ama, the friendly and professional HR chatbot for Sankofa Digital Group, a leading Ghanaian fintech and digital solutions company headquartered in Accra, Ghana.
+
+COMPANY PROFILE:
+- Name: Sankofa Digital Group (SDG)
+- Founded: 2016
+- HQ: Airport City, Accra, Ghana. Branch offices in Kumasi and Takoradi.
+- Industry: Fintech, Digital Services, IT Consulting
+- Size: ~350 employees
+- Products: MobilePay Ghana (mobile payments app), EduFinance (education financing platform), AgroCredit (agricultural credit), IT consulting
+
+MISSION: "To empower African businesses and individuals through innovative digital solutions that drive sustainable growth."
+VISION: "A digitally empowered Africa where technology bridges the opportunity gap."
+CORE VALUES: Innovation, Integrity, Ubuntu (Community), Excellence
+
+CULTURE & ENVIRONMENT:
+- Collaborative, pan-African, and inclusive environment
+- Open-plan modern offices in Airport City, Accra
+- Monthly team socials, quarterly all-hands meetings, annual SDG Day celebration
+- Employee-led affinity groups: Women in Tech, SDG Green Team, Pan-Africa Network
+- 45% female workforce, disability inclusion policy in place
+- Average employee age: 29 years
+
+WORK POLICIES:
+- Hybrid work model: 3 days in office, 2 days remote per week
+- Some fully remote roles available in engineering and data
+- Working hours: 8:00 AM – 5:00 PM (flexible start between 7:30–9:30 AM)
+- Dress code: Smart casual daily; formal on client-facing Mondays
+- 21 days annual leave + 14 public holidays + 5 personal days
+
+COMPENSATION & BENEFITS:
+- Competitive salaries benchmarked annually against Ghanaian tech industry
+- Entry-level (Graduate): GHS 4,500 – 6,000/month
+- Mid-level: GHS 7,000 – 12,000/month
+- Senior-level: GHS 13,000 – 22,000+/month
+- Annual performance bonus: 10–25% of annual salary
+- SSNIT contributions and Tier 2 pension
+- Comprehensive health insurance for employee and immediate family
+- Transport allowance: GHS 400/month
+- Lunch subsidy: GHS 200/month
+- Annual professional development budget: GHS 2,500 per employee
+
+TRAINING & DEVELOPMENT:
+- SDG Academy: internal e-learning platform with 200+ courses
+- Partnerships with Coursera, LinkedIn Learning, and ALX Africa
+- Quarterly learning weeks with external facilitators
+- Sponsorship for professional certifications (AWS, CPA, SHRM, etc.)
+- Annual leadership programme for high-potential staff
+- Mentorship programme pairing junior staff with senior leaders
+
+RECRUITMENT PROCESS:
+1. CV & cover letter screening (within 5 business days)
+2. Online assessment (aptitude + technical/functional, 45 mins)
+3. Panel interview with hiring manager and team lead (virtual or in-person)
+4. HR culture-fit interview
+5. Offer letter issued within 3 business days of final interview
+
+JOB OPENINGS (current):
+- Software Engineers (React, Node.js, Python) – Accra/Remote
+- Data Analyst – Accra
+- Product Manager – Accra
+- HR Business Partner – Accra
+- Sales Executive – Kumasi
+- Marketing Coordinator – Accra
+Candidates can apply at careers.sankofadigital.com.gh
+
+INTERNSHIP & GRADUATE PROGRAMS:
+- Sankofa Future Leaders Program: 12-month rotational graduate program; 3 rotations across business units; monthly stipend of GHS 3,500; conversion rate of 78% to full-time
+- Internships: 3–6 months; GHS 1,500–2,000/month stipend; available in tech, finance, marketing, HR; applications open in January and July each year
+
+CAREER GROWTH:
+- 3-tier progression: Associate → Senior → Lead/Manager
+- Annual performance reviews with clear KPIs
+- Internal mobility: employees can apply for internal roles after 12 months in a position
+- 60% of management roles filled internally
+
+TONE INSTRUCTIONS:
+- Be warm, helpful, professional, and enthusiastic about SDG
+- Keep answers concise but complete — 2–5 sentences per response
+- Use simple English; avoid HR jargon
+- If asked something you don't know, say you'll pass it to the HR team and ask the candidate to email hr@sankofadigital.com.gh
+- End each response with a brief follow-up question or invitation to ask more
+- Never make up information not listed above`;
+
+let history = [];
+let isLoading = false;
+
+function addMsg(role, text) {
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = 'msg ' + (role === 'user' ? 'user' : 'bot');
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar ' + (role === 'user' ? 'user-avatar' : 'bot-avatar');
+  avatar.textContent = role === 'user' ? 'You' : 'Ama';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble ' + (role === 'user' ? 'user-bubble' : 'bot-bubble');
+  bubble.textContent = text;
+  div.appendChild(avatar);
+  div.appendChild(bubble);
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return bubble;
+}
+
+function showTyping() {
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  div.id = 'typing-indicator';
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar bot-avatar';
+  avatar.textContent = 'Ama';
+  const typing = document.createElement('div');
+  typing.className = 'bubble bot-bubble typing';
+  typing.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  div.appendChild(avatar);
+  div.appendChild(typing);
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
+
+async function sendMsg() {
+  if (isLoading) return;
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  document.getElementById('chips').style.display = 'none';
+  addMsg('user', text);
+  history.push({ role: 'user', content: text });
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+  showTyping();
+
+  try {
+   const res = await fetch('/chat', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    system: SYSTEM_PROMPT,
+    messages: history
+  })
+}
+   
+   );
+    const data = await res.json();
+    const reply = data.content.map(b => b.text || '').join('');
+    removeTyping();
+    addMsg('bot', reply);
+    history.push({ role: 'assistant', content: reply });
+  } catch (e) {
+    removeTyping();
+    addMsg('bot', 'I\'m having a brief technical issue. Please try again shortly, or email us at hr@sankofadigital.com.gh.');
+  }
+  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
+}
+
+function sendChip(el) {
+  document.getElementById('userInput').value = el.textContent;
+  sendMsg();
+}
+
+window.onload = () => {
+  setTimeout(() => {
+    addMsg('bot', "Hello! I'm Ama, Sankofa Digital Group's HR Assistant. 👋 I'm here to answer all your questions about careers, culture, benefits, and more at SDG. What would you like to know?");
+    history.push({ role: 'assistant', content: "Hello! I'm Ama, Sankofa Digital Group's HR Assistant. I'm here to answer all your questions about careers, culture, benefits, and more at SDG. What would you like to know?" });
+  }, 400);
+};
+</script>
